@@ -1,17 +1,71 @@
 
+// const express = require('express');
+// const router = express.Router();
+// const db = require('../db'); // must be mysql2/promise connection
+
+// // CREATE
+// router.post('/', async (req, res) => {
+//   try {
+//     const { name, phonenumber, code} = req.body;
+//     const [result] = await db.query(
+//       'INSERT INTO school ( name, phonenumber,code) VALUES (?, ?, ?)',
+//       [ name, phonenumber, code]
+//     );
+//     res.json({ message: 'School added', id: result.insertId });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // READ
+// router.get('/', async (req, res) => {
+//   try {
+//     const [rows] = await db.query('SELECT * FROM school');
+//     res.json(rows);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // UPDATE
+// router.put('/:id', async (req, res) => {
+//   try {
+//     const { name, phonenumber, code, } = req.body;
+//     await db.query(
+//       'UPDATE school SET code = ?, name = ?, phonenumber = ?, WHERE id = ?',
+//       [ name, phonenumber, code, req.params.id]
+//     );
+//     res.json({ message: 'School updated' });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // DELETE
+// router.delete('/:id', async (req, res) => {
+//   try {
+//     await db.query('DELETE FROM school WHERE id = ?', [req.params.id]);
+//     res.json({ message: 'School deleted' });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// module.exports = router;
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); // must be mysql2/promise connection
+const db = require('../db'); // mysql2/promise connection
 
 // CREATE
 router.post('/', async (req, res) => {
   try {
-    const { name, phonenumber, code} = req.body;
-    const [result] = await db.query(
-      'INSERT INTO school ( name, phonenumber,code) VALUES (?, ?, ?)',
-      [ name, phonenumber, code]
-    );
-    res.json({ message: 'School added', id: result.insertId });
+    const { name, phonenumber, code } = req.body;
+    const [result] = await db.query('CALL AddSchool(?, ?, ?)', [
+      name,
+      phonenumber,
+      code,
+    ]);
+    res.json({ message: 'School added' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -20,8 +74,8 @@ router.post('/', async (req, res) => {
 // READ
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM school');
-    res.json(rows);
+    const [rows] = await db.query('CALL GetAllSchools()');
+    res.json(rows[0]); // because stored procedures return a nested array
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -30,11 +84,13 @@ router.get('/', async (req, res) => {
 // UPDATE
 router.put('/:id', async (req, res) => {
   try {
-    const { name, phonenumber, code, } = req.body;
-    await db.query(
-      'UPDATE school SET code = ?, name = ?, phonenumber = ?, WHERE id = ?',
-      [ name, phonenumber, code, req.params.id]
-    );
+    const { name, phonenumber, code } = req.body;
+    await db.query('CALL UpdateSchool(?, ?, ?, ?)', [
+      req.params.id,
+      name,
+      phonenumber,
+      code,
+    ]);
     res.json({ message: 'School updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -44,7 +100,7 @@ router.put('/:id', async (req, res) => {
 // DELETE
 router.delete('/:id', async (req, res) => {
   try {
-    await db.query('DELETE FROM school WHERE id = ?', [req.params.id]);
+    await db.query('CALL DeleteSchool(?)', [req.params.id]);
     res.json({ message: 'School deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
