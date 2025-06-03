@@ -1,0 +1,99 @@
+// File: backend/controllers/authController.js
+
+const db = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const SECRET = process.env.JWT_SECRET || 'supersecretkey';
+
+// --- Helper: Generate JWT ---
+function generateToken(user) {
+  return jwt.sign(
+    { id: user.id, role: user.role, email: user.email },
+    SECRET,
+    { expiresIn: '1d' }
+  );
+}
+
+// REGISTER
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password, phone, role } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    }
+    // 1) Hash password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    // 2) Call stored procedure
+    await db.query('CALL sp_register_user(?, ?, ?, ?, ?)', [
+      name,
+      email,
+      password_hash,
+      phone || null,
+      role === 'admin' ? 'admin' : 'customer',
+    ]);
+
+    // 3) (Optional) Send OTP via SMS/Email here. For now, skip actual sending.
+    //    e.g., otpService.sendOTP(email)
+    res.json({ message: 'Registration successful. Please verify OTP.' });
+  } catch (err) {
+    // MySQL duplicate-email will throw an error
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Email already in use.' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// LOGIN
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+
+    // 1) Fetch user by email
+    const [rows] = await db.query('CALL sp_get_user_by_email(?)', [email]);
+    const user = rows[0][0]; // procedure returns nested array: [ [ userRow ], ... ]
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    // 2) Check if verified
+    if (!user.isVerified) {
+      return res.status(403).json({ error: 'Account not verified. Please complete OTP verification.' });
+    }
+
+    // 3) Compare password
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials.' });
+
+    // 4) Generate JWT
+    const token = generateToken(user);
+    res.json({ message: 'Login successful', token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// OTP VERIFICATION
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required.' });
+    }
+
+    // For demo, assume OTP is always '123456'. In real world, validate against database or cache.
+    if (otp !== '123456') {
+      return res.status(400).json({ error: 'Invalid OTP.' });
+    }
+
+    // Mark user as verified
+    await db.query('CALL sp_verify_otp(?)', [email]);
+    res.json({ message: 'OTP verified successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
