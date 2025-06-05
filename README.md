@@ -4,6 +4,7 @@
 
 npm init -y
 npm install express mysql2 cors
+npm install bcryptjs jsonwebtoken dotenv
 
 # To run
 

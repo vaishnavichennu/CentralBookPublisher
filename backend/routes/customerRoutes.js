@@ -60,8 +60,9 @@
 const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
+const { verifyToken } = require('../middleware/authMiddleware');
 
 // POST /api/customer/products
-router.post('/products', customerController.getMandatoryProducts);
+router.post('/products',  verifyToken, customerController.getMandatoryProducts);
 
 module.exports = router;

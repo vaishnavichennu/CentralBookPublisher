@@ -57,17 +57,18 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
+const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
 
 // POST   /api/orders       → Create a new order
-router.post('/', orderController.createOrder);
+router.post('/', verifyToken, isAdmin, orderController.createOrder);
 
 // GET    /api/orders       → Get all orders
-router.get('/', orderController.getAllOrders);
+router.get('/', verifyToken, isAdmin, orderController.getAllOrders);
 
 // PUT    /api/orders/:id   → Update a specific order
-router.put('/:id', orderController.updateOrder);
+router.put('/:id', verifyToken, isAdmin, orderController.updateOrder);
 
 // DELETE /api/orders/:id   → Delete a specific order
-router.delete('/:id', orderController.deleteOrder);
+router.delete('/:id', verifyToken, isAdmin, orderController.deleteOrder);
 
 module.exports = router;

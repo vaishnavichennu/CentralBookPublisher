@@ -60,18 +60,20 @@
 const express = require('express');
 const router = express.Router();
 const schoolController = require('../controllers/schoolController');
+const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
+
 
 // POST   /api/schools       → Create a new school
-router.post('/', schoolController.createSchool);
+router.post('/', verifyToken, isAdmin, schoolController.createSchool);
 
 // GET    /api/schools       → Get all schools
-router.get('/', schoolController.getAllSchools);
+router.get('/', verifyToken, isAdmin, schoolController.getAllSchools);
 
 // PUT    /api/schools/:id   → Update a specific school
-router.put('/:id', schoolController.updateSchool);
+router.put('/:id', verifyToken, isAdmin, schoolController.updateSchool);
 
 // DELETE /api/schools/:id   → Delete a specific school
-router.delete('/:id', schoolController.deleteSchool);
+router.delete('/:id', verifyToken, isAdmin, schoolController.deleteSchool);
 
 module.exports = router;
 
