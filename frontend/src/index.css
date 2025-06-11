@@ -70,6 +70,6 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 } */
-body {
+/* body {
   @apply bg-gray-50 text-gray-800;
-}
+} */

@@ -1,5 +1,5 @@
-import api from './api'
+// import api from './api'
 
-export function getProductsBySchoolLang(payload) {
-  return api.post('/customer/products', payload)
-}
+// export function getProductsBySchoolLang(payload) {
+//   return api.post('/customer/products', payload)
+// }
