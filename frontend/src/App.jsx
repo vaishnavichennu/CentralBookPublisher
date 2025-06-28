@@ -151,22 +151,35 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
+import AdminLayout from './components/admin/AdminLayout';
+import AdminSchools   from './pages/AdminSchools';
+import AdminCategories from './pages/AdminCategories';
+import AdminProducts  from './pages/AdminProducts';
+import AdminOrders    from './pages/AdminOrders';
+import AdminOrderLines from './pages/AdminOrderLines';
 // PrivateRoute: only render children if user is logged in
+// function PrivateRoute({ children }) {
+//   const { user } = useAuth();
+//   return user ? children : <Navigate to="/login" replace />;
+// }
+
 function PrivateRoute({ children }) {
-  const { user } = useAuth();
-  return user ? children : <Navigate to="/login" replace />;
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading…</div>;
+  if (!user || user.role !== 'admin') return <Navigate to="/login" replace />;
+  return children;
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
+      <BrowserRouter>
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
           {/* Example protected route: / */}
-          <Route
+          {/* <Route
             path="/"
             element={
               <PrivateRoute>
@@ -176,12 +189,28 @@ export default function App() {
                 </div>
               </PrivateRoute>
             }
-          />
+          /> */}
+ <Route
+            path="/admin/*"
+            element={
+              <PrivateRoute>
+                <AdminLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index        element={<Navigate to="schools" replace />} />
+            <Route path="schools"     element={<AdminSchools />} />
+            <Route path="categories"  element={<AdminCategories />} />
+            <Route path="products"    element={<AdminProducts />} />
+            <Route path="orders"      element={<AdminOrders />} />
+            <Route path="orderlines"  element={<AdminOrderLines />} />
+          </Route>
+          
 
           {/* Redirect any unknown path to /login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </Router>
+      </BrowserRouter>
     </AuthProvider>
   );
 }
